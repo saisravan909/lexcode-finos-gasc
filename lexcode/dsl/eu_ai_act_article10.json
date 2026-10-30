@@ -1,0 +1,27 @@
+{
+  "$schema": "https://lexcode.org/schemas/v1/regulation.json",
+  "regulation_id": "EU-AI-ACT-2024",
+  "article": "Article 10 - Data & Data Governance",
+  "clause": "10.2.a",
+  "title": "High-Risk AI System Sovereignty & Lineage Enforcement",
+  "enforcement_level": "HARD_BLOCK",
+  "target_domain": "ai_infrastructure",
+  "rules": [
+    {
+      "rule_id": "RULE-EU-AI-010-LOC",
+      "description": "High-Risk financial AI models must not route data through non-EU nodes.",
+      "property": "node.region",
+      "operator": "IN",
+      "value": ["eu-central-1", "eu-west-1"],
+      "finos_ccc_mapping": "CCC-SEC-012-DATA-RESIDENCY"
+    },
+    {
+      "rule_id": "RULE-EU-AI-010-AUDIT",
+      "description": "Model training data pipelines must have immutable logging enabled.",
+      "property": "node.config.audit_logging",
+      "operator": "EQUALS",
+      "value": true,
+      "finos_ccc_mapping": "CCC-AUD-001-IMMUTABLE-LOGGING"
+    }
+  ]
+}
