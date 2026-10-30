@@ -1,0 +1,16 @@
+{
+  "$schema": "https://finos.org/calm/v1/topology.json",
+  "name": "Non-Compliant-AI-Inference-Pipeline",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "node-us-east-01",
+      "type": "compute",
+      "region": "us-east-1",
+      "config": {
+        "audit_logging": false,
+        "encryption_at_rest": true
+      }
+    }
+  ]
+}
