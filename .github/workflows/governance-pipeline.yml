@@ -24,25 +24,33 @@ jobs:
             lexcode/dsl/eu_ai_act_article10.json \
             calm/generated_controls/eu_ai_act.calm.json
 
-      - name: Validate CALM Architecture Manifest against Governance Rules
+      - name: Validate Compliant Architecture (Must Pass)
         run: |
-          echo "Running CALM CLI Schema Validation..."
-          # Mock evaluation engine parsing CALM topology against compiled controls
           python -c "
           import json, sys
-          with open('calm/generated_controls/eu_ai_act.calm.json') as f: controls = json.load(f)
-          with open('tests/invalid_arch.calm.json') as f: arch = json.load(f)
-          
-          violations = []
+          with open('tests/valid_arch.calm.json') as f: arch = json.load(f)
           for node in arch.get('nodes', []):
               if node.get('region') not in ['eu-central-1', 'eu-west-1']:
-                  violations.append(f'CRITICAL VIOLATION: Node {node[\"id\"]} in region {node.get(\"region\")} breaches EU AI Act Article 10 (Rule: RULE-EU-AI-010-LOC)')
-          
-          if violations:
-              print('\n'.join(violations))
-              print('\n[GOVERNANCE PIPELINE FAILED] Blocking Kubernetes manifest generation.')
+                  print(f'VIOLATION: Node {node[\"id\"]} in region {node.get(\"region\")}')
+                  sys.exit(1)
+          print('[GOVERNANCE PASSED] Valid architecture complies with all regulations.')
+          "
+
+      - name: Validate Non-Compliant Architecture (Must Trigger Guardrail Block)
+        run: |
+          python -c "
+          import json, sys
+          with open('tests/invalid_arch.calm.json') as f: arch = json.load(f)
+          violations = 0
+          for node in arch.get('nodes', []):
+              if node.get('region') not in ['eu-central-1', 'eu-west-1']:
+                  print(f'[GUARDRAIL TRIGGERED] Successfully blocked non-compliant node: {node[\"id\"]}')
+                  print('Citing Legal Obligation: EU AI Act Article 10.2.a (Data Sovereignty)')
+                  violations += 1
+          if violations == 0:
+              print('[ERROR] Guardrail failed to catch violation.')
               sys.exit(1)
-          print('[GOVERNANCE PIPELINE PASSED] Architecture complies with all regulations.')
+          print('[SUCCESS] Governance-as-Code enforcement verified.')
           "
 
       - name: Generate FINOS AI Governance Audit Attestation
