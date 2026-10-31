@@ -1,3 +1,5 @@
+![FINOS Governance Pipeline](https://github.com/saisravan909/lexcode-finos-gasc/actions/workflows/governance-pipeline.yml/badge.svg)
+
 # lexcode-finos-gasc
 Automated legal-to-architecture governance-as-code pipeline extending the FINOS Steel Thread demo.
 # LexCode-to-CALM: Automated Legal-to-Architecture Governance-as-Code
