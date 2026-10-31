@@ -19,3 +19,18 @@ This project bridges the gap between external legal regulations and internal clo
 2. Run the demonstration script:
    ```bash
    bash scripts/demo.sh
+## System Architecture
+
+```text
+[ Legal DSL Regulation ] 
+           │
+           ▼
+[ LexCode Compiler ] 
+           │
+           ▼
+[ FINOS CALM Rules ] 
+           │
+           ▼
+[ Fluxnova Policy Gate ] ◄── [ Architecture Manifest ]
+       ├──► [Compliant] ──────► [ FINOS CCC Attestation Signed ]
+       └──► [Non-Compliant] ──► [ Deployment Blocked + Legal Citation ]
