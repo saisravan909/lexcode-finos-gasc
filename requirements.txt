@@ -1,0 +1,5 @@
+# Core dependencies for LexCode-to-CALM Governance-as-Code Pipeline & Policy Playground
+# Ensures deterministic local reproduction and interactive compliance evaluation
+
+# Interactive Web UI for testing regulatory DSLs against CALM architecture manifests
+streamlit>=1.39.0
