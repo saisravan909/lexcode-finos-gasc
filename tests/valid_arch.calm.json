@@ -1,25 +1,42 @@
 {
-  "$schema": "https://finos.org/calm/v1/topology.json",
-  "name": "EU-Compliant-AI-Inference-Pipeline",
-  "version": "1.0.0",
+  "$schema": "https://calm.finos.org/release/1.3/meta/calm.json",
   "nodes": [
     {
-      "id": "node-eu-primary-01",
-      "type": "compute",
+      "unique-id": "case-service",
+      "node-type": "service",
+      "name": "Case service",
+      "description": "Synthetic AML case workflow service.",
       "region": "eu-central-1",
-      "config": {
-        "audit_logging": true,
-        "encryption_at_rest": true
-      }
+      "access_logging": true
     },
     {
-      "id": "node-eu-secondary-02",
-      "type": "storage",
+      "unique-id": "evidence-store",
+      "node-type": "database",
+      "name": "Evidence store",
+      "description": "Synthetic store for case evidence references.",
       "region": "eu-west-1",
-      "config": {
-        "audit_logging": true,
-        "encryption_at_rest": true
-      }
+      "access_logging": true
     }
-  ]
+  ],
+  "relationships": [
+    {
+      "unique-id": "case-service-reads-evidence",
+      "description": "The case service reads evidence from the controlled evidence store.",
+      "relationship-type": {
+        "connects": {
+          "source": {
+            "node": "case-service"
+          },
+          "destination": {
+            "node": "evidence-store"
+          }
+        }
+      },
+      "protocol": "HTTPS"
+    }
+  ],
+  "workflow": {
+    "human_decision_required": true,
+    "ai_can_close_alert": false
+  }
 }

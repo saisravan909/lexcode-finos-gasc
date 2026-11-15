@@ -1,41 +1,54 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+mkdir -p artifacts calm/architecture
 
-echo -e "${GREEN}=== Starting LexCode -> CALM FINOS Governance-as-Code Pipeline ===${NC}\n"
+printf '%s\n' 'LexCode policy to CALM demonstration'
+printf '%s\n' '1. Compile the internal policy into a CALM architecture'
+python3 lexcode/compiler/lexcode_to_calm.py \
+  lexcode/dsl/sample_internal_policy.json \
+  tests/valid_arch.calm.json \
+  calm/architecture/lexcode_policy_architecture.json
 
-# Step 1: Compile Regulations
-echo "Step 1: Compiling EU AI Act Legal DSL into CALM Controls..."
-python3 lexcode/compiler/lexcode_to_calm.py lexcode/dsl/eu_ai_act_article10.json calm/generated_controls/eu_ai_act.calm.json
-echo ""
+printf '\n%s\n' '2. Validate the generated architecture with the FINOS CALM CLI'
+npx --yes @finos/calm-cli@1.72.0 validate \
+  --architecture calm/architecture/lexcode_policy_architecture.json \
+  --format pretty
+npx --yes @finos/calm-cli@1.72.0 validate \
+  --architecture tests/invalid_arch.calm.json \
+  --format pretty
 
-# Step 2: Test Non-Compliant Architecture
-echo "Step 2: Submitting Non-Compliant Architecture (US Data Routing)..."
-if python3 -c "
-import json, sys
-with open('calm/generated_controls/eu_ai_act.calm.json') as f: controls = json.load(f)
-with open('tests/invalid_arch.calm.json') as f: arch = json.load(f)
-for node in arch.get('nodes', []):
-    if node.get('region') not in ['eu-central-1', 'eu-west-1']:
-        print('${RED}[BLOCK EXECUTED] Architecture violates Rule RULE-EU-AI-010-LOC!${NC}')
-        print('Citing Legal Obligation: EU AI Act Article 10.2.a (Data Sovereignty)')
-        sys.exit(1)
-" 2>/dev/null; then
-  echo "Validation passed unexpectedly."
+printf '\n%s\n' '3. Confirm the compliant sample passes'
+python3 scripts/run_policy_gate.py \
+  --architecture tests/valid_arch.calm.json \
+  > artifacts/valid_policy_result.json
+python3 -c 'import json; r=json.load(open("artifacts/valid_policy_result.json")); print("[PASS]", r["status"], "checks:", len(r["checks"]))'
+
+printf '\n%s\n' '4. Confirm the unsafe sample fails closed'
+if python3 scripts/run_policy_gate.py \
+  --architecture tests/invalid_arch.calm.json \
+  > artifacts/invalid_policy_result.json; then
+  printf '%s\n' '[ERROR] The invalid sample unexpectedly passed.'
+  exit 1
 else
-  echo -e "${RED}Pipeline halted successfully. Deployment blocked.${NC}\n"
+  result_code=$?
+  if [ "$result_code" -ne 2 ]; then
+    printf 'Policy runner exited with unexpected code %s.\n' "$result_code"
+    exit "$result_code"
+  fi
+  python3 -c 'import json; r=json.load(open("artifacts/invalid_policy_result.json")); print("[BLOCK]", r["failure_count"], "internal policy findings; no legal conclusion")'
 fi
 
-# Step 3: Test Compliant Architecture
-echo "Step 3: Submitting Compliant Architecture (EU Data Routing & Logging Enabled)..."
-python3 -c "
-import json, sys
-with open('calm/generated_controls/eu_ai_act.calm.json') as f: controls = json.load(f)
-with open('tests/valid_arch.calm.json') as f: arch = json.load(f)
-print('${GREEN}[GOVERNANCE PASSED] Workload verified against FINOS CCC & CALM Rules.${NC}')
-"
+printf '\n%s\n' '5. Write the local pull request comment preview'
+python3 scripts/pr_bot_sim.py
 
-echo -e "\n${GREEN}=== Execution Complete: End-to-End Governance Enforced ===${NC}"
+printf '\n%s\n' '6. Create a content addressed record for the passing sample'
+python3 scripts/generate_attestation.py \
+  --architecture tests/valid_arch.calm.json \
+  --output artifacts/audit_attestation.json
+
+printf '\n%s\n' '7. Run the policy and compiler checks'
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+printf '\n%s\n' 'Demo complete. CI signs the attestation with Sigstore.'
