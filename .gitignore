@@ -1,5 +1,10 @@
 __pycache__/
 *.py[cod]
+.DS_Store
 artifacts/*.json
 artifacts/*.md
 node_modules/
+.venv/
+venv/
+audit_attestation.json
+pr_comment_preview.md
