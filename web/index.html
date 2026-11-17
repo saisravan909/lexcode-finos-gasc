@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>LexCode Policy Playground</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="LexCode home"><span class="brand-mark">L</span><span>LEXCODE</span></a>
+    <span class="local-tag"><span class="dot"></span>Local policy evaluation</span>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">FINOS governance as code</p>
+      <h1>Turn policy into an architecture check.</h1>
+      <p class="lede">Compile a versioned organization policy into CALM controls, then see exactly which architecture facts pass or need review.</p>
+    </section>
+    <section class="notice" aria-label="Policy scope note">
+      <span class="notice-icon">i</span>
+      <p><strong>Scope:</strong> the region allowlist is a synthetic organization policy. EU AI Act Article 10 is shown as context and is not treated as a general residency mandate.</p>
+    </section>
+    <section class="workspace">
+      <aside class="policy-panel panel">
+        <div class="panel-heading"><div><p class="eyebrow">01 / Policy source</p><h2 id="policy-title">Loading policy</h2></div><span class="badge">Internal policy</span></div>
+        <p id="policy-description" class="muted"></p>
+        <div class="rule-list" id="rule-list"></div>
+        <div class="source-note"><span class="source-label">Legal context</span><p id="legal-context"></p><a id="legal-link" target="_blank" rel="noreferrer">Open official source ↗</a></div>
+      </aside>
+      <section class="architecture-panel panel">
+        <div class="panel-heading"><div><p class="eyebrow">02 / Architecture input</p><h2>CALM architecture</h2></div></div>
+        <label for="sample-select">Load a sample</label>
+        <select id="sample-select"><option value="valid">Compliant sample</option><option value="invalid">Policy findings</option></select>
+        <label for="architecture-input">Edit the architecture JSON</label>
+        <textarea id="architecture-input" spellcheck="false" aria-describedby="input-help"></textarea>
+        <p id="input-help" class="help">This stays in your browser and is evaluated on your computer.</p>
+        <button id="evaluate-button" class="primary-button" type="button">Run policy gate <span aria-hidden="true">→</span></button>
+      </section>
+    </section>
+    <section class="results panel" aria-live="polite">
+      <div class="result-top"><div><p class="eyebrow">03 / Deterministic result</p><h2>Evaluation</h2></div><span id="result-status" class="status-pill idle">Waiting for a run</span></div>
+      <p id="result-summary" class="muted">Choose a sample or edit the JSON, then run the policy gate.</p>
+      <div id="result-checks" class="check-grid"></div>
+    </section>
+    <footer><span>LexCode to CALM</span><span>Evaluation is local. No model call or GitHub action is triggered.</span></footer>
+  </main>
+</body>
+</html>

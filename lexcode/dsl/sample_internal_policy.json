@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "LEXCODE_INTERNAL_CASE_DATA_001",
+  "version": "1.0.0",
+  "title": "Sensitive case data handling",
+  "policy_type": "synthetic_internal_organization_policy",
+  "policy_owner": "Hackathon demonstration",
+  "legal_context": {
+    "reference": "Regulation (EU) 2024/1689, Article 10",
+    "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
+    "relationship": "Context only. Article 10 addresses data and data governance for high risk AI systems. This policy does not claim that Article 10 creates a general EU data residency rule.",
+    "claim_type": "context_not_direct_mandate"
+  },
+  "rules": [
+    {
+      "id": "LEXCODE_REGION_BOUNDARY_001",
+      "title": "Keep sensitive case processing within the approved trust perimeter",
+      "description": "Every modeled service and data store must use a region approved by this synthetic organization policy.",
+      "scope": "nodes",
+      "field": "region",
+      "operator": "in",
+      "expected": ["eu-central-1", "eu-west-1"],
+      "source_type": "internal_policy",
+      "ccc_mappings": [
+        {
+          "id": "CCC.Core.CN06",
+          "title": "Restrict Deployments to Trust Perimeter",
+          "relationship": "related_control_not_a_residency_mandate"
+        }
+      ]
+    },
+    {
+      "id": "LEXCODE_ACCESS_LOGGING_001",
+      "title": "Record access and changes",
+      "description": "Every modeled service and data store must enable access and change logging.",
+      "scope": "nodes",
+      "field": "access_logging",
+      "operator": "equals",
+      "expected": true,
+      "source_type": "internal_policy",
+      "ccc_mappings": [
+        {
+          "id": "CCC.Core.CN04",
+          "title": "Log All Access and Changes",
+          "relationship": "related_control"
+        }
+      ]
+    },
+    {
+      "id": "LEXCODE_HUMAN_REVIEW_001",
+      "title": "Require a human decision for every disposition",
+      "description": "An AI assisted workflow may prepare information but must not make the final case disposition.",
+      "scope": "workflow",
+      "field": "human_decision_required",
+      "operator": "equals",
+      "expected": true,
+      "source_type": "organization_policy_aligned_with_draft_framework_use_case",
+      "aigf_reference": {
+        "url": "https://github.com/finos/ai-governance-framework/blob/main/docs/_usecases/uc-4_anti-financial-crime-investigation.md",
+        "status": "draft"
+      }
+    },
+    {
+      "id": "LEXCODE_NO_AUTOMATED_CLOSURE_001",
+      "title": "Do not let AI close an alert",
+      "description": "An AI assistant may summarize or recommend, but it cannot close an alert or file a report.",
+      "scope": "workflow",
+      "field": "ai_can_close_alert",
+      "operator": "equals",
+      "expected": false,
+      "source_type": "organization_policy_aligned_with_draft_framework_use_case",
+      "aigf_reference": {
+        "url": "https://github.com/finos/ai-governance-framework/blob/main/docs/_usecases/uc-4_anti-financial-crime-investigation.md",
+        "status": "draft"
+      }
+    }
+  ]
+}

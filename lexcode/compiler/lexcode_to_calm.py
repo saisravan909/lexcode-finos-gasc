@@ -1,41 +1,87 @@
 #!/usr/bin/env python3
+"""Compile a LexCode policy into CALM control requirements."""
+
+from __future__ import annotations
+
+import argparse
+import copy
 import json
-import sys
 from pathlib import Path
+from typing import Any
 
-def compile_regulation_to_calm(lexcode_path: str, output_path: str):
-    with open(lexcode_path, 'r') as f:
-        reg_data = json.load(f)
-    
-    calm_controls = {
-        "$schema": "https://finos.org/calm/v1/controls.json",
-        "regulation_reference": reg_data["regulation_id"],
-        "article": reg_data["article"],
-        "generated_rules": []
-    }
 
-    for rule in reg_data["rules"]:
-        calm_rule = {
-            "control_id": rule["rule_id"],
-            "finos_ccc_id": rule["finos_ccc_mapping"],
-            "description": rule["description"],
-            "evaluator": {
-                "field": rule["property"],
-                "operator": rule["operator"],
-                "expected": rule["value"]
-            },
-            "enforcement": reg_data["enforcement_level"]
+CONTROL_REQUIREMENT_URL = "https://calm.finos.org/release/1.3/meta/control-requirement.json"
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    with path.open(encoding="utf-8") as source:
+        value = json.load(source)
+    if not isinstance(value, dict):
+        raise ValueError(f"Expected a JSON object in {path}")
+    return value
+
+
+def compile_policy(policy: dict[str, Any], architecture: dict[str, Any]) -> dict[str, Any]:
+    if not policy.get("policy_id") or not policy.get("version"):
+        raise ValueError("Policy must define policy_id and version")
+    rules = policy.get("rules")
+    if not isinstance(rules, list) or not rules:
+        raise ValueError("Policy must contain at least one rule")
+
+    compiled = copy.deepcopy(architecture)
+    compiled["$schema"] = "https://calm.finos.org/release/1.3/meta/calm.json"
+    requirements = []
+    for rule in rules:
+        requirements.append(
+            {
+                "requirement-url": CONTROL_REQUIREMENT_URL,
+                "config": {
+                    "control-id": rule["id"],
+                    "name": rule["title"],
+                    "description": rule["description"],
+                    "policy-id": policy["policy_id"],
+                    "policy-version": policy["version"],
+                    "evaluation": {
+                        "scope": rule["scope"],
+                        "field": rule["field"],
+                        "operator": rule["operator"],
+                        "expected": rule["expected"],
+                    },
+                    "ccc-mappings": rule.get("ccc_mappings", []),
+                    "aigf-reference": rule.get("aigf_reference"),
+                },
+            }
+        )
+    compiled["controls"] = {
+        "lexcode-policy-controls": {
+            "description": (
+                f"Generated from {policy['policy_id']} version {policy['version']}. "
+                "Policy checks are internal controls and do not assert legal compliance."
+            ),
+            "requirements": requirements,
         }
-        calm_controls["generated_rules"].append(calm_rule)
+    }
+    return compiled
 
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w') as f:
-        json.dump(calm_controls, f, indent=2)
-    
-    print(f"[LexCode Compiler] Successfully compiled {reg_data['regulation_id']} into CALM controls: {output_path}")
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("policy", type=Path)
+    parser.add_argument("architecture", type=Path, help="Base CALM architecture JSON")
+    parser.add_argument("output", type=Path)
+    args = parser.parse_args()
+
+    policy = load_json(args.policy)
+    architecture = load_json(args.architecture)
+    result = compile_policy(policy, architecture)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(
+        f"[LexCode] Compiled {len(policy['rules'])} internal policy controls "
+        f"into {args.output}"
+    )
+    return 0
+
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python lexcode_to_calm.py <lexcode_file> <output_calm_file>")
-        sys.exit(1)
-    compile_regulation_to_calm(sys.argv[1], sys.argv[2])
+    raise SystemExit(main())
